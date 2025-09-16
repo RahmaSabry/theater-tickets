@@ -4,7 +4,7 @@ import fs from "fs";
 import Ticket from "../models/Ticket.js";
 
 const router = express.Router();
-
+const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 router.post("/create", async (req, res) => {
    try {
     const { price, count } = req.body;
@@ -18,8 +18,8 @@ router.post("/create", async (req, res) => {
     for (let i = 0; i < count; i++) {
       const ticket = await Ticket.create({ price: price });
 
-      const qrData = `http://localhost:3000/ticket/scan/${ticket._id}`;
-      const qrImage = await QRCode.toDataURL(qrData); 
+      const qrData = `${BASE_URL}/ticket/scan/${ticket._id}`;
+      const qrImage = await QRCode.toDataURL(qrData);
 
       createdTickets.push({
         ticketId: ticket._id,
