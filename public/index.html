@@ -28,7 +28,7 @@
 
   batchForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const user = document.getElementById("batchUser").value;
+    const price = document.getElementById("price").value;
     const count = parseInt(document.getElementById("batchCount").value);
 
     const res = await fetch("/ticket/create", {
