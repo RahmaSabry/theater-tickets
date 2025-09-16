@@ -1,65 +1,83 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Theater Tickets - Admin</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body { font-family: system-ui, Arial; max-width: 720px; margin: 2rem auto; padding: 1rem; }
-    .ticket { border: 1px solid #ddd; padding: 1rem; margin: 1rem 0; display:flex; gap:1rem; align-items:center; }
-    img.qr { width:120px; height:120px; object-fit:contain; }
-    button { padding:0.5rem 1rem; }
-  </style>
+  <meta charset="UTF-8">
+  <title>Theater Tickets</title>
 </head>
 <body>
-  <h1>Theater Tickets - Admin</h1>
-  <p>Create tickets and show QR to print or save.</p>
 
-  <div>
-    <label>Number of tickets to create: <input id="count" type="number" value="1" min="1" max="100"></label>
-    <button id="create">Create</button>
-  </div>
+  <h2>📸 Scan Ticket</h2>
+<button onclick="location.href='scan.html'">Go to Scan Page</button>
+  <h1>🎟️ Theater Ticket Generator</h1>
 
-  <div id="list"></div>
+  <h2>Batch Ticket Generator</h2>
+<form id="batchForm">
+  <input type="number" id="batchUser" placeholder="ادخل سعر التذكرة" required>
+  <input type="number" id="batchCount" placeholder="عدد التذاكر" required>
+  <button type="submit">إنشاء تذاكر متعددة  </button>
+</form>
+<h2>Generated Tickets</h2>
+<div id="ticketList"></div>
 
-  <hr>
-  <p>Scanner page: <a href="/scan">/scan</a> — open on mobile to scan QR codes.</p>
 
+  <h2>Tickets:</h2>
+  <ul id="ticketList"></ul>
 <script>
-const list = document.getElementById('list');
-document.getElementById('create').addEventListener('click', async () => {
-  const count = parseInt(document.getElementById('count').value) || 1;
-  list.innerHTML = 'Creating...';
-  const results = [];
-  for (let i=0;i<count;i++){
-    const res = await fetch('/api/tickets', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({}) });
-    const data = await res.json();
-    results.push(data);
-  }
-  list.innerHTML = '';
-  console.log(results);
-  
-  results.forEach(r => {
-    const div = document.createElement('div');
-    div.className = 'ticket';
-    div.innerHTML = `
-      <div><img class="qr" src="${r.qr}" alt="qr"></div>
-      <div>
-        <div><strong>Code:</strong> ${r.code}</div>
-        <div><button onclick="check('${r.code}', this)">Check status</button></div>
-      </div>
-    `;
-    list.appendChild(div);
-  });
-});
+  const batchForm = document.getElementById("batchForm");
+  const ticketList = document.getElementById("ticketList");
 
-async function check(code, btn){
-  btn.disabled = true;
-  const res = await fetch('/api/tickets/' + code);
-  const data = await res.json();
-  alert(JSON.stringify(data, null, 2));
-  btn.disabled = false;
-}
+  batchForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const user = document.getElementById("batchUser").value;
+    const count = parseInt(document.getElementById("batchCount").value);
+
+    const res = await fetch("/ticket/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user, count })
+    });
+
+    const data = await res.json();
+    ticketList.innerHTML = "";
+
+    data.tickets.forEach(ticket => {
+      const div = document.createElement("div");
+      div.innerHTML = `
+        <p><b>${ticket.user}</b></p>
+        <img src="${ticket.qrImage}" width="150" />
+        <br>
+        <a href="${ticket.qrImage}" download="ticket_${ticket.ticketId}.png">
+          <button>Download QR</button>
+        </a>
+        <hr>
+      `;
+      ticketList.appendChild(div);
+    });
+  });
 </script>
+  <!-- <script>
+    const list = document.getElementById("ticketList");
+
+
+    async function loadTickets() {
+      list.innerHTML = "";
+      const res = await fetch("/ticket");
+      const tickets = await res.json();
+
+      tickets.forEach(t => {
+        const li = document.createElement("li");
+        console.log(t);
+        
+        li.innerHTML = `
+          ${t.user} - ${t.used ? "✅ Used" : "🟢 Active"} 
+          <a href="/ticket/${t._id}" target="_blank">[QR]</a>
+          <a href="/ticket/scan/${t._id}" target="_blank">[Scan]</a>
+        `;
+        list.appendChild(li);
+      });
+    }
+
+    loadTickets();
+  </script> -->
 </body>
 </html>
