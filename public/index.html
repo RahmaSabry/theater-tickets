@@ -34,7 +34,7 @@
     const res = await fetch("/ticket/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user, count })
+      body: JSON.stringify({ price, count })
     });
 
     const data = await res.json();
