@@ -2,6 +2,8 @@ import express from "express";
 import QRCode from "qrcode";
 import fs from "fs";
 import Ticket from "../models/Ticket.js";
+import dotenv from "dotenv";
+dotenv.config();
 
 const router = express.Router();
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";

@@ -1,63 +1,73 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <title>Scan Ticket</title>
-  <script src="https://unpkg.com/html5-qrcode"></script> 
+  <title>مسح التذكرة</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px; }
+    .ticket-card { background: #fff; border-radius: 12px; padding: 20px; max-width: 400px; margin-top: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    .ticket-card img { width: 100%; border-radius: 8px; }
+    .ticket-card h2 { margin: 10px 0 5px; font-size: 22px; color: #333; }
+    .ticket-card p { margin: 5px 0; color: #555; font-size: 16px; }
+    .status { font-weight: bold; }
+    .valid { color: green; }
+    .used { color: red; }
+  </style>
 </head>
 <body>
-  <h1>📸 Scan Ticket</h1>
+  <h1>📸 مسح التذكرة</h1>
+  <button id="startCamera">ابدأ السكان</button>
 
-  <button id="startCamera">Start Camera</button>
   <div id="reader" style="width:500px; margin-top:20px;"></div>
+  <div id="scanResult"></div>
 
-  <div id="result" style="margin-top:20px;"></div>
+<script>
+  const startCameraBtn = document.getElementById("startCamera");
+  const scanResult = document.getElementById("scanResult");
+  let html5QrcodeScanner;
 
-  <script>
-    const startCameraBtn = document.getElementById("startCamera");
-    const resultDiv = document.getElementById("result");
-    let html5QrcodeScanner;
+  startCameraBtn.addEventListener("click", () => {
+    if (html5QrcodeScanner) return;
+    html5QrcodeScanner = new Html5Qrcode("reader");
 
-    startCameraBtn.addEventListener("click", () => {
-      if (html5QrcodeScanner) return;
+    html5QrcodeScanner.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: 250 },
+      async (decodedText, decodedResult) => {
+        const ticketId = decodedText.split("/").pop();
 
-      html5QrcodeScanner = new Html5Qrcode("reader");
-      html5QrcodeScanner.start(
-        { facingMode: "environment" },
-        {
-          fps: 10,
-          qrbox: 250
-        },
-        async (decodedText, decodedResult) => {
-          // QR scanned successfully
-          const ticketId = decodedText.split("/").pop(); 
-          try {
-            const res = await fetch(`/ticket/scan/${ticketId}`);
-            const data = await res.json();
+        try {
+          const res = await fetch(`/ticket/scan/${ticketId}`);
+          const data = await res.json();
 
-            if (data.error) {
-              resultDiv.innerHTML = `<p style="color:red;">❌ ${data.error}</p>`;
-            } else {
-              let color = data.status === "valid" ? "green" : "red";
-              resultDiv.innerHTML = `
-                <p><b>User:</b> ${data.user}</p>
-                <p><b>Price:</b> ${data.price}</p>
-                <p><b>Status:</b> <span style="color:${color}">${data.status}</span></p>
-              `;
-            }
-          } catch (err) {
-            console.error(err);
-            resultDiv.innerHTML = `<p style="color:red;">Error scanning ticket</p>`;
+          if (data.error) {
+            scanResult.innerHTML = `<p style="color:red;">❌ ${data.error}</p>`;
+          } else {
+            const statusClass = data.status === "valid" ? "valid" : "used";
+            const showImage = "/images/theater-show.png"; 
+            scanResult.innerHTML = `
+              <div class="ticket-card">
+                <img src="${showImage}" alt="${data.showName}">
+                <h2>${data.showName}</h2>
+                <p><b>المستخدم:</b> ${data.user}</p>
+                <p><b>تاريخ العرض:</b> ${data.showDate || "25/9/2025"}</p>
+                <p><b>الوقت:</b> ${data.showTime || "8 مساءً"}</p>
+                <p><b>سعر التذكرة:</b> ${data.price || "100"} جنيه</p>
+                <p class="status ${statusClass}">الحالة: ${data.status}</p>
+              </div>
+            `;
           }
-
-          html5QrcodeScanner.stop();
-        },
-        (errorMessage) => {
-          // error scanning QR
-          console.warn(errorMessage);
+        } catch (err) {
+          console.error(err);
+          scanResult.innerHTML = `<p style="color:red;">حدث خطأ أثناء السكان</p>`;
         }
-      );
-    });
-  </script>
+
+        html5QrcodeScanner.stop();
+      },
+      (errorMessage) => { console.warn(errorMessage); }
+    );
+  });
+</script>
 </body>
 </html>
