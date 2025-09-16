@@ -1,0 +1,112 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Scan Ticket</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: system-ui, Arial; max-width:600px; margin:1rem auto; padding:1rem; text-align:center; }
+    video { width:100%; max-height:60vh; border:1px solid #ddd; }
+    #result { margin-top:1rem; }
+    button { padding:0.5rem 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Scan Ticket</h1>
+  <p>Open this page on your phone, allow camera, and point to a QR containing the ticket code.</p>
+
+  <video id="video" autoplay muted playsinline></video>
+  <div id="result"></div>
+  <div style="margin-top:1rem;">
+    <button id="start">Start Camera</button>
+    <button id="stop">Stop Camera</button>
+  </div>
+
+<script>
+/*
+ Basic camera + QR scanning using browser's BarcodeDetector if available,
+ otherwise fall back to manual prompt (user can paste code).
+ This avoids external libs so it's self-contained.
+*/
+const video = document.getElementById('video');
+const resultDiv = document.getElementById('result');
+let stream;
+let detector;
+let scanning = false;
+
+async function startCamera(){
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    video.srcObject = stream;
+    if ('BarcodeDetector' in window) {
+      const supportedFormats = await BarcodeDetector.getSupportedFormats();
+      detector = new BarcodeDetector({ formats: supportedFormats });
+      scanning = true;
+      scanLoop();
+    } else {
+      resultDiv.innerHTML = '<p>Your browser does not support BarcodeDetector. If you have a QR code image, paste the code below.</p>' +
+                            '<p><input id="manual" placeholder="paste code"><button onclick="manualScan()">Use Code</button></p>';
+    }
+  } catch (e){
+    console.error(e);
+    alert('Camera permission denied or not available: ' + e.message);
+  }
+}
+
+async function scanLoop(){
+  if (!scanning) return;
+  try {
+    const barcodes = await detector.detect(video);
+    if (barcodes.length){
+      const bc = barcodes[0];
+      const code = bc.rawValue || bc.displayValue;
+      handleCode(code);
+      scanning = false;
+      stopCamera();
+      return;
+    }
+  } catch (e) {
+    // ignore detection errors
+    console.error(e);
+  }
+  requestAnimationFrame(scanLoop);
+}
+
+function stopCamera(){
+  scanning = false;
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+    stream = null;
+  }
+  video.srcObject = null;
+}
+
+async function handleCode(code){
+  resultDiv.innerHTML = '<p>Processing code: <strong>' + code + '</strong></p>';
+  try {
+    const res = await fetch('/api/scan', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ code })
+    });
+    const data = await res.json();
+    if (res.ok){
+      resultDiv.innerHTML = '<p style="color:green">Success: ' + (data.message || 'Ticket used') + '</p>';
+    } else {
+      resultDiv.innerHTML = '<p style="color:red">Error: ' + (data.error || JSON.stringify(data)) + '</p>';
+    }
+  } catch (e){
+    resultDiv.innerHTML = '<p style="color:red">Request failed: ' + e.message + '</p>';
+  }
+}
+
+function manualScan(){
+  const code = document.getElementById('manual').value.trim();
+  if (code) handleCode(code);
+}
+
+document.getElementById('start').addEventListener('click', startCamera);
+document.getElementById('stop').addEventListener('click', () => { stopCamera(); resultDiv.innerHTML = ''; });
+</script>
+</body>
+</html>
