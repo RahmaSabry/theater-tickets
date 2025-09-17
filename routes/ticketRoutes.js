@@ -9,7 +9,7 @@ router.get("/:id", async (req, res) => {
   const ticket = await Ticket.findById(req.params.id);
   if (!ticket) return res.status(404).send("Ticket not found");
   const statusClass = ticket.used ? "valid" : "used";
-  const showImage = "/images/theater-show.png";
+  const showImage = `/images/theater-show-${ticket.price}.png`;
 
   res.send(`
     <!DOCTYPE html>
@@ -89,6 +89,7 @@ router.get("/:id", async (req, res) => {
           <p><b>التاريخ:</b> ${ticket.showDate || "24/09/2025"}</p>
           <p><b>الوقت:</b> ${ticket.showTime || "7:30 مساء"}</p>
           <p><b>السعر:</b> ${ticket.price || "غير محدد"} جنيه</p>
+          <p><b>المكان:</b> علي مسرح الهوسابير</p>
           <p class="status ${ticket.used ? "used" : "valid"}">
             ${ticket.used ? "❌  تم استخدام التذكرة في : " + new Date(ticket.usedAt).toLocaleString("ar-EG") : "✅ التذكرة صالحة"}
           </p>
