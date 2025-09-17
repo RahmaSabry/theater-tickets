@@ -160,7 +160,7 @@ async function fetchTickets() {
       <button class="sell" ${ticket.sold ? "disabled" : ""} onclick="sellTicket('${ticket._id}')">
         ${ticket.sold ? "مباعة" : "بيع التذكرة"}
       </button>
-      <button class="copy" onclick="copyLink('${ticket.qrLink}')">📋 نسخ اللينك</button>
+      <button class="copy" onclick="copyLink('${ticket.qrImagePath}')">📋 نسخ اللينك</button>
     `;
 
     if (ticket.price === 100) {
