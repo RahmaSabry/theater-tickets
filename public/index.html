@@ -153,7 +153,7 @@ async function fetchTickets() {
     div.className = "ticket " + (ticket.sold ? "sold" : "");
 
     div.innerHTML = `
-      <h3>${ticket.title}</h3>
+      <h3>${ticket.title || "مسرحية شبابيك "}</h3>
       <p>السعر: ${ticket.price} ج.م</p>
       <img src="${ticket.qrImagePath}" alt="QR Code" />
       <br/>
