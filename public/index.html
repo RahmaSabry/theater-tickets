@@ -1,83 +1,203 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <title>Theater Tickets</title>
-</head>
-<body>
-
-  <h2>📸 Scan Ticket</h2>
-<button onclick="location.href='scan.html'">Go to Scan Page</button>
-  <h1>🎟️ Theater Ticket Generator</h1>
-
-  <h2>Batch Ticket Generator</h2>
-<form id="batchForm">
-  <input type="number" id="price" placeholder="ادخل سعر التذكرة" required>
-  <input type="number" id="batchCount" placeholder="عدد التذاكر" required>
-  <button type="submit">إنشاء تذاكر متعددة  </button>
-</form>
-<h2>Generated Tickets</h2>
-<div id="ticketList"></div>
-
-
-  <h2>Tickets:</h2>
-  <ul id="ticketList"></ul>
-<script>
-  const batchForm = document.getElementById("batchForm");
-  const ticketList = document.getElementById("ticketList");
-
-  batchForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const price = document.getElementById("price").value;
-    const count = parseInt(document.getElementById("batchCount").value);
-
-    const res = await fetch("/ticket/create", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ price, count })
-    });
-
-    const data = await res.json();
-    ticketList.innerHTML = "";
-
-    data.tickets.forEach(ticket => {
-      const div = document.createElement("div");
-      div.innerHTML = `
-        <p><b>${ticket.user}</b></p>
-        <img src="${ticket.qrImage}" width="150" />
-        <br>
-        <a href="${ticket.qrImage}" download="ticket_${ticket.ticketId}.png">
-          <button>Download QR</button>
-        </a>
-        <hr>
-      `;
-      ticketList.appendChild(div);
-    });
-  });
-</script>
-  <!-- <script>
-    const list = document.getElementById("ticketList");
-
-
-    async function loadTickets() {
-      list.innerHTML = "";
-      const res = await fetch("/ticket");
-      const tickets = await res.json();
-
-      tickets.forEach(t => {
-        const li = document.createElement("li");
-        console.log(t);
-        
-        li.innerHTML = `
-          ${t.user} - ${t.used ? "✅ Used" : "🟢 Active"} 
-          <a href="/ticket/${t._id}" target="_blank">[QR]</a>
-          <a href="/ticket/scan/${t._id}" target="_blank">[Scan]</a>
-        `;
-        list.appendChild(li);
-      });
+  <meta charset="UTF-8" />
+  <title>🎭 نظام التذاكر</title>
+  <style>
+    body {
+      font-family: "Cairo", sans-serif;
+      background: #f7f7f7;
+      margin: 0;
+    }
+    header {
+      background: #004aad;
+      color: #fff;
+      text-align: center;
+      padding: 15px;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 20px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    h2 {
+      margin-top: 0;
+      color: #004aad;
     }
 
-    loadTickets();
-  </script> -->
+    /* ✅ تنسيق الفورم */
+    form {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+      background: #f0f4ff;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    form label {
+      font-weight: bold;
+      color: #333;
+    }
+    form select, form input {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+      min-width: 120px;
+    }
+    form button {
+      background: #28a745;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    form button:hover {
+      background: #218838;
+    }
+
+    .columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+    }
+    .tickets {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 20px;
+    }
+    .ticket {
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 15px;
+      text-align: center;
+      background: #fafafa;
+    }
+    .ticket.sold {
+      background: #eee;
+      opacity: 0.6;
+    }
+    .ticket img {
+      width: 120px;
+      margin-top: 10px;
+    }
+    .ticket button {
+      margin-top: 8px;
+      padding: 6px 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .sell {
+      background: #28a745;
+      color: #fff;
+    }
+    .sell:disabled {
+      background: gray;
+      cursor: not-allowed;
+    }
+    .copy {
+      background: #007bff;
+      color: #fff;
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
+  <header><h1>🎟️ نظام بيع التذاكر</h1></header>
+  <div class="container">
+    <h2>➕ إنشاء تذاكر جديدة</h2>
+    <form id="createForm">
+      <label for="price">السعر:</label>
+      <select id="price">
+        <option value="100">100 ج.م</option>
+        <option value="75">75 ج.م</option>
+      </select>
+
+      <label for="count">عدد التذاكر:</label>
+      <input type="number" id="count" min="1" value="1" />
+
+      <button type="submit">إنشاء</button>
+    </form>
+
+    <div class="columns">
+      <div>
+        <h2>التذاكر (100 ج.م)</h2>
+        <div class="tickets" id="tickets100"></div>
+      </div>
+      <div>
+        <h2>التذاكر (75 ج.م)</h2>
+        <div class="tickets" id="tickets75"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+async function fetchTickets() {
+  const res = await fetch("/ticket");
+  const tickets = await res.json();
+
+  document.getElementById("tickets100").innerHTML = "";
+  document.getElementById("tickets75").innerHTML = "";
+
+  tickets.forEach(ticket => {
+    const div = document.createElement("div");
+    div.className = "ticket " + (ticket.sold ? "sold" : "");
+
+    div.innerHTML = `
+      <h3>${ticket.title}</h3>
+      <p>السعر: ${ticket.price} ج.م</p>
+      <img src="${ticket.qrImagePath}" alt="QR Code" />
+      <br/>
+      <button class="sell" ${ticket.sold ? "disabled" : ""} onclick="sellTicket('${ticket._id}')">
+        ${ticket.sold ? "مباعة" : "بيع التذكرة"}
+      </button>
+      <button class="copy" onclick="copyLink('${ticket.qrLink}')">📋 نسخ اللينك</button>
+    `;
+
+    if (ticket.price === 100) {
+      document.getElementById("tickets100").appendChild(div);
+    } else {
+      document.getElementById("tickets75").appendChild(div);
+    }
+  });
+}
+
+async function sellTicket(id) {
+  await fetch(`/ticket/${id}/sell`, { method: "POST" });
+  fetchTickets();
+}
+
+function copyLink(link) {
+  const fullLink = window.location.origin + link;
+  navigator.clipboard.writeText(link);
+  alert("تم نسخ لينك التذكرة ✅");
+}
+
+document.getElementById("createForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const price = document.getElementById("price").value;
+  const count = document.getElementById("count").value;
+
+  await fetch("/ticket/create", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ price, count }),
+  });
+
+  fetchTickets();
+});
+
+fetchTickets();
+</script>
 </body>
 </html>
