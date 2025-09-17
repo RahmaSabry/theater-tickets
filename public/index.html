@@ -177,13 +177,15 @@ async function sellTicket(id) {
 }
 
 function copyLink(link) {
-  const fullLink = window.location.origin + link;
   navigator.clipboard.writeText(link);
   alert("تم نسخ لينك التذكرة ✅");
 }
 
 document.getElementById("createForm").addEventListener("submit", async (e) => {
   e.preventDefault();
+
+  const createBtn = e.target.querySelector("button[type='submit']");
+  createBtn.disabled = true;
 
   const price = document.getElementById("price").value;
   const count = document.getElementById("count").value;
@@ -195,6 +197,7 @@ document.getElementById("createForm").addEventListener("submit", async (e) => {
   });
 
   fetchTickets();
+  createBtn.disabled = false;
 });
 
 fetchTickets();

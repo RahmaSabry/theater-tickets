@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import path from "path";
 import { fileURLToPath } from "url";
+import cloudinary from "cloudinary";
 dotenv.config();
 
 const router = express.Router();
@@ -16,6 +17,13 @@ if (!fs.existsSync(qrDir)) {
   fs.mkdirSync(qrDir, { recursive: true });
 }
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
+
+cloudinary.v2.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
 router.post("/create", async (req, res) => {
   try {
     const { price, count } = req.body;
@@ -33,11 +41,14 @@ router.post("/create", async (req, res) => {
       });
 
       const qrLink = `${BASE_URL}/ticket/${ticket._id}`;
-      const filePath = path.join(qrDir, `${ticket._id}.png`);
-
-      await QRCode.toFile(filePath, qrLink);
+      const qrBuffer = await QRCode.toBuffer(qrLink);
+       const result = await cloudinary.v2.uploader.upload(
+      `data:image/png;base64,${qrBuffer.toString('base64')}`,
+      { folder: 'qr-codes' }
+    );
+    
       ticket.qrLink = qrLink;
-      ticket.qrImagePath = `/qrcodes/${ticket._id}.png`;
+      ticket.qrImagePath = result.secure_url;
       await ticket.save();
       createdTickets.push(ticket);
     }
