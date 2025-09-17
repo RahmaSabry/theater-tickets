@@ -1,54 +1,8 @@
 import express from "express";
-import QRCode from "qrcode";
-import fs from "fs";
 import Ticket from "../models/Ticket.js";
 import dotenv from "dotenv";
-import mongoose from "mongoose";
-import path from "path";
-import { fileURLToPath } from "url";
 dotenv.config();
-
 const router = express.Router();
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const qrDir = path.join(__dirname, "../public/qrcodes"); 
-if (!fs.existsSync(qrDir)) {
-  fs.mkdirSync(qrDir, { recursive: true });
-}
-const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
-router.post("/create", async (req, res) => {
-  try {
-    const { price, count } = req.body;
-
-    if (!price || !count) {
-      return res.status(400).json({ error: "Price and count are required" });
-    }
-
-    const createdTickets = [];
-
-    for (let i = 0; i < count; i++) {
-      const ticket = await Ticket.create({
-        price,
-        sold: false,
-      });
-
-      const qrLink = `${BASE_URL}/ticket/${ticket._id}`;
-      const filePath = path.join(qrDir, `${ticket._id}.png`);
-
-      await QRCode.toFile(filePath, qrLink);
-      ticket.qrLink = qrLink;
-      ticket.qrImagePath = `/qrcodes/${ticket._id}.png`;
-      await ticket.save();
-      createdTickets.push(ticket);
-    }
-
-    res.json(createdTickets);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
 router.get("/:id", async (req, res) => {
   console.log("Accessing ticket:", req.params.id);
   
@@ -169,20 +123,5 @@ router.post("/use/:id", async (req, res) => {
   res.json({ message: "✅ تم تسجيل استخدام التذكرة" });
 });
 
-router.post("/:id/sell", async (req, res) => {
-  const ticket = await Ticket.findById(req.params.id);
-  if (!ticket) return res.status(404).json({ error: "Ticket not found" });
-
-  ticket.sold = true;
-  ticket.soldAt = new Date();
-  await ticket.save();
-
-  res.json(ticket);
-});
-
-router.get("/", async (req, res) => {
-  const tickets = await Ticket.find();
-  res.json(tickets);
-});
 
 export default router;

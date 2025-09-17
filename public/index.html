@@ -1,203 +1,80 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-  <meta charset="UTF-8" />
-  <title>🎭 نظام التذاكر</title>
-  <style>
-    body {
-      font-family: "Cairo", sans-serif;
-      background: #f7f7f7;
-      margin: 0;
-    }
-    header {
-      background: #004aad;
-      color: #fff;
-      text-align: center;
-      padding: 15px;
-    }
-    .container {
-      max-width: 1100px;
-      margin: 20px auto;
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    h2 {
-      margin-top: 0;
-      color: #004aad;
-    }
-
-    /* ✅ تنسيق الفورم */
-    form {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      flex-wrap: wrap;
-      background: #f0f4ff;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-    }
-    form label {
-      font-weight: bold;
-      color: #333;
-    }
-    form select, form input {
-      padding: 8px 12px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 14px;
-      min-width: 120px;
-    }
-    form button {
-      background: #28a745;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      padding: 8px 16px;
-      font-size: 15px;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-    form button:hover {
-      background: #218838;
-    }
-
-    .columns {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 30px;
-    }
-    .tickets {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 20px;
-    }
-    .ticket {
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      padding: 15px;
-      text-align: center;
-      background: #fafafa;
-    }
-    .ticket.sold {
-      background: #eee;
-      opacity: 0.6;
-    }
-    .ticket img {
-      width: 120px;
-      margin-top: 10px;
-    }
-    .ticket button {
-      margin-top: 8px;
-      padding: 6px 10px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .sell {
-      background: #28a745;
-      color: #fff;
-    }
-    .sell:disabled {
-      background: gray;
-      cursor: not-allowed;
-    }
-    .copy {
-      background: #007bff;
-      color: #fff;
-      margin-right: 5px;
-    }
-  </style>
-</head>
-<body>
-  <header><h1>🎟️ نظام بيع التذاكر</h1></header>
-  <div class="container">
-    <h2>➕ إنشاء تذاكر جديدة</h2>
-    <form id="createForm">
-      <label for="price">السعر:</label>
-      <select id="price">
-        <option value="100">100 ج.م</option>
-        <option value="75">75 ج.م</option>
-      </select>
-
-      <label for="count">عدد التذاكر:</label>
-      <input type="number" id="count" min="1" value="1" />
-
-      <button type="submit">إنشاء</button>
-    </form>
-
-    <div class="columns">
-      <div>
-        <h2>التذاكر (100 ج.م)</h2>
-        <div class="tickets" id="tickets100"></div>
+ <!DOCTYPE html>
+    <html lang="ar" dir="rtl">
+    <head>
+      <meta charset="UTF-8">
+      <title>تذكرة العرض</title>
+      <style>
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          background: #f9fafb;
+          margin: 0;
+          padding: 40px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+        .ticket-container {
+          background: #fff;
+          padding: 30px;
+          border-radius: 10px;
+          width: 100%;
+          max-width: 420px;
+          border: 1px solid #e5e7eb;
+        }
+        .ticket-header {
+          border-bottom: 1px solid #e5e7eb;
+          margin-bottom: 20px;
+          padding-bottom: 10px;
+        }
+        .ticket-header h2 {
+          margin: 0;
+          font-size: 22px;
+          color: #111827;
+        }
+        .ticket-details p {
+          margin: 8px 0;
+          font-size: 15px;
+          color: #374151;
+        }
+        .status {
+          margin-top: 15px;
+          font-weight: bold;
+          font-size: 16px;
+        }
+        .valid { color: #16a34a; }   /* أخضر */
+        .used { color: #dc2626; }    /* أحمر */
+        button {
+          margin-top: 20px;
+          width: 100%;
+          padding: 12px;
+          font-size: 15px;
+          border: none;
+          border-radius: 6px;
+          background: #2563eb;
+          color: #fff;
+          cursor: pointer;
+          transition: background 0.2s ease;
+        }
+        button:hover:not(:disabled) {
+          background: #1e40af;
+        }
+        button:disabled {
+          background: #9ca3af;
+          cursor: not-allowed;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="ticket-container">
+        <div class="ticket-header">
+          <h2>مسرحية شبابيك </h2>
+        </div>
+        <div class="ticket-details">
+          <img src="/images/theater-show.png" alt="Show Image" style="width:100%; border-radius:8px; margin-bottom:15px;" />
+          <p><b>التاريخ:</b> 24/09/2025</p>
+          <p><b>الوقت:</b> 8 مساء</p>
+          <p><b>السعر:</b> 100 جنيه</p>
+        </div>
       </div>
-      <div>
-        <h2>التذاكر (75 ج.م)</h2>
-        <div class="tickets" id="tickets75"></div>
-      </div>
-    </div>
-  </div>
-
-<script>
-async function fetchTickets() {
-  const res = await fetch("/ticket");
-  const tickets = await res.json();
-
-  document.getElementById("tickets100").innerHTML = "";
-  document.getElementById("tickets75").innerHTML = "";
-
-  tickets.forEach(ticket => {
-    const div = document.createElement("div");
-    div.className = "ticket " + (ticket.sold ? "sold" : "");
-
-    div.innerHTML = `
-      <h3>${ticket.title}</h3>
-      <p>السعر: ${ticket.price} ج.م</p>
-      <img src="${ticket.qrImagePath}" alt="QR Code" />
-      <br/>
-      <button class="sell" ${ticket.sold ? "disabled" : ""} onclick="sellTicket('${ticket._id}')">
-        ${ticket.sold ? "مباعة" : "بيع التذكرة"}
-      </button>
-      <button class="copy" onclick="copyLink('${ticket.qrLink}')">📋 نسخ اللينك</button>
-    `;
-
-    if (ticket.price === 100) {
-      document.getElementById("tickets100").appendChild(div);
-    } else {
-      document.getElementById("tickets75").appendChild(div);
-    }
-  });
-}
-
-async function sellTicket(id) {
-  await fetch(`/ticket/${id}/sell`, { method: "POST" });
-  fetchTickets();
-}
-
-function copyLink(link) {
-  const fullLink = window.location.origin + link;
-  navigator.clipboard.writeText(link);
-  alert("تم نسخ لينك التذكرة ✅");
-}
-
-document.getElementById("createForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const price = document.getElementById("price").value;
-  const count = document.getElementById("count").value;
-
-  await fetch("/ticket/create", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ price, count }),
-  });
-
-  fetchTickets();
-});
-
-fetchTickets();
-</script>
-</body>
-</html>
+    </body>
+    </html>
