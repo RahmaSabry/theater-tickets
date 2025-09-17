@@ -87,7 +87,7 @@ router.get("/:id", async (req, res) => {
           <img src="${showImage}" alt="Show Image" style="width:100%; border-radius:8px; margin-bottom:15px;" />
           <p><b>رقم التذكرة:</b> ${ticket._id}</p>
           <p><b>التاريخ:</b> ${ticket.showDate || "24/09/2025"}</p>
-          <p><b>الوقت:</b> ${ticket.showTime || "8 مساء"}</p>
+          <p><b>الوقت:</b> ${ticket.showTime || "7:30 مساء"}</p>
           <p><b>السعر:</b> ${ticket.price || "غير محدد"} جنيه</p>
           <p class="status ${ticket.used ? "used" : "valid"}">
             ${ticket.used ? "❌  تم استخدام التذكرة في : " + new Date(ticket.usedAt).toLocaleString("ar-EG") : "✅ التذكرة صالحة"}
